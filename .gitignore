@@ -8,7 +8,5 @@ __pycache__/
 models/
 
 # Données : médias en entrée et transcriptions en sortie
-input/*
-output/*
-!input/.gitkeep
-!output/.gitkeep
+input/
+output/
