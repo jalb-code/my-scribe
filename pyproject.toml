@@ -1,0 +1,16 @@
+[project]
+name = "my-scribe"
+version = "2.0.0"
+description = "Transcription audio/vidéo → texte (français) via faster-whisper"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "faster-whisper>=1.1.0",
+    "typer>=0.12.0",
+    "loguru>=0.7.2",
+    "huggingface-hub>=0.25.0",
+]
+
+[tool.uv]
+# faster-whisper embarque ctranslate2 + PyAV (décodage audio/vidéo) :
+# pas besoin de torch ni du binaire ffmpeg pour l'inférence CPU.

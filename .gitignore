@@ -1,0 +1,14 @@
+# Environnements Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Modèles téléchargés (volumineux)
+models/
+
+# Données : médias en entrée et transcriptions en sortie
+input/*
+output/*
+!input/.gitkeep
+!output/.gitkeep
