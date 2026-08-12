@@ -4,6 +4,11 @@ venv/
 __pycache__/
 *.pyc
 
+# Caches des outils de qualité
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
 # Modèles téléchargés (volumineux)
 models/
 

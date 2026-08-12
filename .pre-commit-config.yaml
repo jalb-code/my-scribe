@@ -1,0 +1,43 @@
+# Hooks git de qualité. Installation une fois : uv run pre-commit install
+# Les hooks ruff/mypy/pytest s'appuient sur les outils du dev group (uv run) :
+# une seule source de vérité pour les versions (dev group == CI == local).
+default_install_hook_types: [pre-commit, pre-push]
+
+repos:
+  # Hygiène de base
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+
+  # Lint + format + types via les outils du projet
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --fix
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy
+        entry: uv run mypy transcribe.py
+        language: system
+        types: [python]
+        pass_filenames: false
+      # Tests uniquement au push (garde les commits rapides)
+      - id: pytest
+        name: pytest
+        entry: uv run pytest
+        language: system
+        types: [python]
+        pass_filenames: false
+        stages: [pre-push]

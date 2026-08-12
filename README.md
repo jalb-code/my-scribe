@@ -11,6 +11,7 @@ Transcription locale de fichiers **audio ou vidéo** en texte et sous-titres, op
 ## Prérequis
 
 - [uv](https://docs.astral.sh/uv/) installé.
+- **Python ≥ 3.14** : récupéré automatiquement par `uv` via le fichier `.python-version`.
 - Aucune installation de `ffmpeg` ni de `torch` requise : PyAV (embarqué par faster-whisper) décode l'audio/vidéo.
 
 ## Installation
@@ -105,3 +106,30 @@ Le fine-tune français est téléchargé automatiquement au premier usage dans `
 ```powershell
 uv run transcribe.py input\cours.m4a --model bofenghuang/whisper-large-v3-french-distil-dec2
 ```
+
+## Développement / Qualité du code
+
+Les outils de qualité sont déclarés dans le `dependency-group` **dev** de `pyproject.toml`
+(non installés en production) et installés par `uv sync`.
+
+| Outil | Rôle |
+|-------|------|
+| [Ruff](https://docs.astral.sh/ruff/) | Linter **+** formateur (remplace flake8, isort, black, pyupgrade…). |
+| [mypy](https://mypy-lang.org/) | Vérification de types statique. |
+| [pytest](https://docs.pytest.org/) | Tests unitaires des fonctions pures (`tests/`). |
+| [pre-commit](https://pre-commit.com/) | Hooks git : lance ruff + mypy avant chaque commit, pytest avant chaque push. |
+
+```powershell
+# Installer les dépendances (dont le dev group) + les hooks git (une fois)
+uv sync
+uv run pre-commit install
+
+# Contrôles manuels
+uv run ruff check .          # lint
+uv run ruff format .         # formatage
+uv run mypy transcribe.py    # types
+uv run pytest                # tests
+```
+
+Ces mêmes contrôles sont rejoués automatiquement en **intégration continue**
+([GitHub Actions](.github/workflows/ci.yml)) à chaque push ou pull request vers `develop` et `main`.

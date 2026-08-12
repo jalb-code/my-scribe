@@ -18,7 +18,6 @@ import sys
 import textwrap
 import time
 from pathlib import Path
-from typing import Optional
 
 import typer
 from loguru import logger
@@ -130,9 +129,7 @@ def discover_media(input_path: Path) -> list[Path]:
     """Retourne la liste des fichiers média à traiter (fichier unique ou dossier)."""
     if input_path.is_file():
         return [input_path]
-    files = sorted(
-        f for f in input_path.iterdir() if f.suffix.lower() in MEDIA_EXTENSIONS
-    )
+    files = sorted(f for f in input_path.iterdir() if f.suffix.lower() in MEDIA_EXTENSIONS)
     return files
 
 
@@ -141,7 +138,7 @@ def discover_media(input_path: Path) -> list[Path]:
 # ----------------------------------------------------------------------------
 def fmt_ts(seconds: float, sep: str = ".") -> str:
     """Formate un temps en HH:MM:SS<sep>mmm (sep='.' pour VTT, ',' pour SRT)."""
-    ms = int(round(seconds * 1000))
+    ms = round(seconds * 1000)
     h, ms = divmod(ms, 3_600_000)
     m, ms = divmod(ms, 60_000)
     s, ms = divmod(ms, 1_000)
@@ -188,7 +185,9 @@ def render_srt(segments: list[dict]) -> str:
     return "\n".join(lines)
 
 
-def render(fmt: str, segments: list[dict], info: dict, paragraph_gap: float, line_length: int) -> str:
+def render(
+    fmt: str, segments: list[dict], info: dict, paragraph_gap: float, line_length: int
+) -> str:
     if fmt == "txt":
         return group_paragraphs(segments, paragraph_gap, line_length) + "\n"
     if fmt == "vtt":
@@ -206,7 +205,7 @@ def render(fmt: str, segments: list[dict], info: dict, paragraph_gap: float, lin
     raise ValueError(f"Format inconnu : {fmt}")
 
 
-def build_output_path(media: Path, out_dir: Optional[Path], fmt: str, use_full_name: bool) -> Path:
+def build_output_path(media: Path, out_dir: Path | None, fmt: str, use_full_name: bool) -> Path:
     """Chemin du fichier de sortie. use_full_name conserve l'extension source (anti-collision)."""
     stem = media.name if use_full_name else media.stem
     directory = out_dir if out_dir else media.parent
@@ -220,12 +219,12 @@ def process_one(
     model,
     media: Path,
     *,
-    lang: Optional[str],
+    lang: str | None,
     formats: list[str],
-    out_dir: Optional[Path],
+    out_dir: Path | None,
     beam_size: int,
     vad: bool,
-    initial_prompt: Optional[str],
+    initial_prompt: str | None,
     condition_previous: bool,
     paragraph_gap: float,
     line_length: int,
@@ -300,7 +299,7 @@ def main(
     lang: str = typer.Option(
         "fr", "--lang", "-l", help="Langue (fr, en, es...) ou 'auto' pour détection."
     ),
-    model: Optional[str] = typer.Option(
+    model: str | None = typer.Option(
         None,
         "--model",
         "-m",
@@ -320,7 +319,7 @@ def main(
     vad: bool = typer.Option(
         True, "--vad/--no-vad", help="Filtre VAD : supprime les silences (moins d'hallucinations)."
     ),
-    initial_prompt: Optional[str] = typer.Option(
+    initial_prompt: str | None = typer.Option(
         None,
         "--initial-prompt",
         help="Amorce pour guider ponctuation et vocabulaire métier.",
@@ -349,14 +348,17 @@ def main(
     formats_list = [f.strip().lower() for f in formats.split(",") if f.strip()]
     invalid = set(formats_list) - VALID_FORMATS
     if invalid:
-        logger.error(f"Format(s) invalide(s) : {', '.join(sorted(invalid))}. "
-                     f"Valides : {', '.join(sorted(VALID_FORMATS))}.")
+        logger.error(
+            f"Format(s) invalide(s) : {', '.join(sorted(invalid))}. "
+            f"Valides : {', '.join(sorted(VALID_FORMATS))}."
+        )
         raise typer.Exit(1)
 
     # Découverte des fichiers
     if not input.exists():
         logger.error(
-            f"Chemin introuvable : {input}. Déposez des fichiers dans ./input ou précisez un chemin."
+            f"Chemin introuvable : {input}. "
+            f"Déposez des fichiers dans ./input ou précisez un chemin."
         )
         raise typer.Exit(1)
     media_files = discover_media(input)
@@ -372,7 +374,7 @@ def main(
         logger.warning("Noms en collision : les sorties conserveront l'extension source.")
 
     # Langue : 'auto' → détection (language=None)
-    lang_arg: Optional[str] = None if lang.lower() == "auto" else lang
+    lang_arg: str | None = None if lang.lower() == "auto" else lang
 
     # Modèle par défaut selon la langue
     model_ref = model or DEFAULT_MODEL_BY_LANG.get(lang.lower(), DEFAULT_MODEL)
@@ -411,7 +413,8 @@ def main(
             stats["fail"] += 1
 
     logger.success(
-        f"Terminé : {stats['ok']} transcrit(s), {stats['skip']} ignoré(s), {stats['fail']} échec(s)."
+        f"Terminé : {stats['ok']} transcrit(s), "
+        f"{stats['skip']} ignoré(s), {stats['fail']} échec(s)."
     )
     if stats["fail"]:
         raise typer.Exit(1)
