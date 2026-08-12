@@ -117,7 +117,11 @@ Les outils de qualité sont déclarés dans le `dependency-group` **dev** de `py
 | [Ruff](https://docs.astral.sh/ruff/) | Linter **+** formateur (remplace flake8, isort, black, pyupgrade…). |
 | [mypy](https://mypy-lang.org/) | Vérification de types statique. |
 | [pytest](https://docs.pytest.org/) | Tests unitaires des fonctions pures (`tests/`). |
-| [pre-commit](https://pre-commit.com/) | Hooks git : lance ruff + mypy avant chaque commit, pytest avant chaque push. |
+| [gitleaks](https://github.com/gitleaks/gitleaks) | Détection de secrets/mots de passe (hook pré-commit). |
+| [pre-commit](https://pre-commit.com/) | Hooks git : gitleaks + ruff + mypy avant chaque commit, pytest avant chaque push. |
+
+> **Note** : le hook gitleaks appelle le binaire `gitleaks` (hors dev group Python).
+> À installer une fois : `winget install Gitleaks.Gitleaks`.
 
 ```powershell
 # Installer les dépendances (dont le dev group) + les hooks git (une fois)
@@ -129,7 +133,17 @@ uv run ruff check .          # lint
 uv run ruff format .         # formatage
 uv run mypy transcribe.py    # types
 uv run pytest                # tests
+gitleaks git --staged -v     # secrets (fichiers stagés)
 ```
 
-Ces mêmes contrôles sont rejoués automatiquement en **intégration continue**
-([GitHub Actions](.github/workflows/ci.yml)) à chaque push ou pull request vers `develop` et `main`.
+### Sécurité en intégration continue
+
+La [CI GitHub Actions](.github/workflows/ci.yml) rejoue à chaque push ou pull request
+vers `develop`/`main` :
+
+- **Job `quality`** : ruff (lint + format), mypy, pytest.
+- **Job `security`** : [Trivy](https://trivy.dev/) scanne `uv.lock` et **échoue si une CVE
+  `HIGH`/`CRITICAL` corrigeable** touche une dépendance (`--ignore-unfixed`).
+
+> L'interpréteur Python est maintenu à jour côté CI : `.python-version` épingle la série 3.14
+> et `setup-uv` récupère automatiquement le dernier correctif 3.14.x.

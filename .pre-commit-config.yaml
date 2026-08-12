@@ -14,9 +14,16 @@ repos:
       - id: check-toml
       - id: check-added-large-files
 
-  # Lint + format + types via les outils du projet
+  # Lint + format + types + secrets via les outils du projet
   - repo: local
     hooks:
+      # Détection de secrets/mots de passe dans les fichiers stagés.
+      # Nécessite gitleaks sur le PATH : winget install Gitleaks.Gitleaks
+      - id: gitleaks
+        name: gitleaks (détection de secrets)
+        entry: gitleaks git --pre-commit --staged --redact --verbose
+        language: system
+        pass_filenames: false
       - id: ruff-check
         name: ruff check
         entry: uv run ruff check --fix

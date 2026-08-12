@@ -31,3 +31,21 @@ jobs:
 
       - name: pytest
         run: uv run pytest
+
+  # Scan de vulnérabilités : échoue si une CVE HIGH/CRITICAL corrigeable
+  # est présente dans les dépendances (lecture de uv.lock).
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Trivy — CVE HIGH/CRITICAL corrigeables (dépendances)
+        uses: aquasecurity/trivy-action@0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
